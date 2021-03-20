@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Artista y Letra de canción</title>
+    <style>
+        html{
+            font-family: sans-serif;
+        }
+        img{
+            max-width: 100%;
+            height: auto;
+        }
+        main{
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .loader{
+            display: none;
+            margin: auto;
+        }
+        .song blockquote{
+            white-space: pre-wrap;
+        }
+
+        @media screen and (min-width:800px){
+            main{
+                flex-direction: row;
+            }
+        }
+        main > *{
+            padding: 1rem;
+            flex-basis: 50%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Buscador de canciones</h1>
+    <form id="song-search">
+        <input type="text" name="artist" placeholder="Nombre del Interprete" required>
+        <br>
+        <input type="text" name="song" placeholder="Nombre de la Canción" required>
+        <br>
+        <input type="submit">
+    </form>
+    <img class="loader" src="../assets/loading.svg" alt="Cargando...">
+    <aside class="error"></aside>
+    <main>
+        <article class="artist"></article>
+        <article class="song"></article>
+    </main>
+    <script>
+        $form=document.getElementById("song-search"),
+        $loader=document.querySelector(".loader"),
+        $error=document.querySelector(".error"),
+        $main=document.querySelector("main"),
+        $artist=document.querySelector(".artist"),
+        $song=document.querySelector(".song");
+
+        $form.addEventListener("submit",async e=>{
+            e.preventDefault();
+
+            try {
+                //loader que esta en none en style lo paso a "block"
+                $loader.style.display="block";
+                //variable para guadar la inf q el usuario escriba en formulario/artist.value=atributo mame del input
+                let artist=e.target.artist.value.toLowerCase(),
+                //variable para guadar la inf q el usuario escriba en el formulario/song=atributo mame del input
+                song=e.target.song.value.toLowerCase(),
+                $artistTemplate="",
+                $songTemplate="",
+                //la url de la API concatenacion con la variable (artist) de la busqueda
+                artistAPI=`https://theaudiodb.com/api/v1/json/1/search.php?s=${artist}`,
+                //la url de la API concatenacion con la variable (song) de la busqueda
+                songAPI=`https://api.lyrics.ovh/v1/${artist}/${song}`,
+
+                artistFetch=fetch(artistAPI),
+                songFetch=fetch(songAPI),
+                //como son dos peticiones no se sabe cual responde primero se hace destructuracion para usar promise.all
+                //artistRes va a esperar la respuesta de artistFetch Y songRes espera por respuesta de songFetch 
+                [artistRes,songRes]= await Promise.all([artistFetch,songFetch]),
+                //convertir respuestas a json
+                artistData=await artistRes.json(),
+                songData=await songRes.json();
+
+                //console.log(artistRes,songRes);
+                console.log(artistData,songData);
+
+                if(artistData.artists===null){
+                    $artistTemplate=`<h2>No existe el interprete <mark>${artist}</mark></h2>`; 
+                }else{
+                    //le indico que del artists tome la posicion 0
+                    let artist=artistData.artists[0];
+                    $artistTemplate=`
+                    <h2>${artist.strArtist}</h2>
+                    <img src="${artist.strArtistThumb}" alt="${artist.strArtist}">
+                    <p>${artist.intBornYear}-${(artist.intDiedYear || "Presente")}</p>
+                    <p>${artist.strCountry}</p>
+                    <p>${artist.strGenre}-${artist.strStyle}</p>
+                    <a href="http://${artist.strWebsite}" target="_blank" > Sitio Web </a>
+                    <p>${artist.strBiographyEN}</p>
+                    `;
+                }//para la canción
+                if(songData.err){
+                    $songTemplate=`<h2>No existe la canción <mark>${song}</mark></h2>`;
+                }else{
+                    $songTemplate=`
+                    <h2>${song.toUpperCase()}</h2>
+                    <blockquote>${songData.lyrics}</blockquote>
+                    `;
+                }//asignación del contenido de las variables al template y el loader pasa a none
+                $loader.style.display="none";
+                $artist.innerHTML=$artistTemplate;
+                $song.innerHTML=$songTemplate;
+            } catch (err) {
+                console.log(err);
+               //error si hay equivocacion en la URL
+                let message=err.statusText || "ocurrio un eror";
+                $error.innerHTML=`<p>error ${err.status}:${message} </p>`; 
+                $loader.style.display="none";
+            }
+        })
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platos por País</title>
+</head>
+<body>
+   <h1>Platos Típicos de Paises</h1> 
+   <section class="crud">
+       <article>
+           <h2 class="crud-title">Agregar Plato</h2>
+           <form class="crud-form">
+               <input type="text" name="nombre" placeholder="nombre" required>
+               <br>
+               <input type="text" name="pais" placeholder="pais" required>
+               <br>
+               <input type="submit" value="Enviar">
+               <input type="hidden" name="id">
+           </form>
+       </article>
+       <article>
+           <h2>Ver Platos</h2>
+           <table class="crud-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>País</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+           </table>
+       </article>
+
+   </section>
+   <template id="crud-template">
+       <tr>
+           <td class="nombre"></td>
+           <td class="pais"></td>
+           <td>
+               <button class="edid">Editar</button>
+               <button class="delete">Eliminar</button>
+           </td>
+       </tr>
+   </template>
+   <script>
+       $table=document.querySelector(".crud-table"),
+       $form=document.querySelector(".crud-form"),
+       $title=document.querySelector(".crud-title"),
+       $template=document.getElementById("crud-template").content,
+       $fragment=document.createDocumentFragment();
+
+       const getAll=async()=>{
+           try {
+               let res=await fetch("http://localhost:5555/platos"),
+               json=await res.json();
+               if(!res.ok)throw {status:res.status,statusText:res.statusText};
+               console.log(json);
+               json.forEach(el => {
+                   //lo que viene en el parametro td del template lo agrego al el.nombre y país del json
+                $template.querySelector(".nombre").textContent=el.nombre;
+                $template.querySelector(".pais").textContent=el.pais;
+                //id del botton del template con id del json
+                $template.querySelector(".edid").dataset.id=el.id;
+                $template.querySelector(".edid").dataset.name=el.nombre;
+                $template.querySelector(".edid").dataset.paises=el.pais;
+                //para el botton de eliminar solo importa el id
+                $template.querySelector(".delete").dataset.id=el.id;
+                let $clone=document.importNode($template,true);
+                $fragment.appendChild($clone);
+               });
+               $table.querySelector("tbody").appendChild($fragment);
+           } catch (err) {
+            let message=err.statusText || "ocurrio un eror";
+            $table.insertAdjacentHTML("afterend",`<p><b>Error ${err.status}:${message}</b></p>`);
+           }
+       }
+       document.addEventListener("DOMContentLoaded",getAll);
+
+       document.addEventListener("submit",async e =>{
+           if(e.target===$form){
+               e.preventDefault();
+               if(!e.target.id.value){
+                   //create-POST
+                   try {
+                       let options={
+                          method:"POST",
+                          headers:{
+                              "Content-type":"application/json;charset=utf-8"
+                          },
+                          body:JSON.stringify({
+                              //valores del json con valores del formulario/nombre del atributo de la estructura json donde se va a almacenar
+                              nombre:e.target.nombre.value,
+                              pais:e.target.pais.value
+                          })
+                       },
+                       res=await fetch("http://localhost:5555/platos",options),
+                       json=await res.json();
+                      
+                       if(!res.ok)throw {status:res.status,statusText:res.statusText};
+                       location.reload();
+                   } catch (err) {
+                    let message=err.statusText || "ocurrio un eror";
+                    $form.insertAdjacentHTML("afterend",`<p><b>Error ${err.status}:${message}</b></p>`);
+                   }
+               }else{
+                   //update-PUT
+                   try {
+                       let options={
+                          method:"PUT",
+                          headers:{
+                              "Content-type":"application/json;charset=utf-8"
+                          },
+                          body:JSON.stringify({
+                              //valores del json con valores del formulario/nombre del atributo de la estructura json donde se va a almacenar
+                              nombre:e.target.nombre.value,
+                              pais:e.target.pais.value
+                          })
+                       },
+                       res=await fetch(`http://localhost:5555/platos/${e.target.id.value}`,options),
+                       json=await res.json();
+                       
+                    
+                       if(!res.ok)throw {status:res.status,statusText:res.statusText};
+                       location.reload();
+                   } catch (err) {
+                    let message=err.statusText || "ocurrio un eror";
+                    $form.insertAdjacentHTML("afterend",`<p><b>Error ${err.status}:${message}</b></p>`);
+                   }
+               }
+           }
+       });
+        document.addEventListener("click",async e => {
+           if(e.target.matches(".edid")){
+               //console.log("diste click");
+               
+               //para pasar todos los botones que vinen en el dataatribut al  id formulario
+                $title.textContent="Editar Plato";
+                $form.nombre.value=e.target.dataset.name;
+                $form.pais.value=e.target.dataset.paises;
+                $form.id.value=e.target.dataset.id;
+            }
+           if(e.target.matches(".delete")){
+               let isDelete=confirm(`¿esta seguro de eliminar ${e.target.dataset.id}?`);
+
+               if(isDelete){
+                   //Delete-DELETE
+                   try {
+                       let options={
+                          method:"DELETE",
+                          headers:{
+                              "Content-type":"application/json;charset=utf-8"
+                          } 
+                       },
+                       res=await fetch(`http://localhost:5555/platos/${e.target.dataset.id}`,options),
+                       json=await res.json();
+                       
+                       if(!res.ok)throw {status:res.status,statusText:res.statusText};
+                       location.reload();
+                   } catch (err) {
+                    let message=err.statusText || "ocurrio un eror";
+                    alert(`Error ${err.status}:${message}`); 
+                   }  
+               }
+           }
+       })
+   </script>
+</body>
+</html>

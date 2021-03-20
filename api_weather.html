@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es" data-dark>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado del Tiempo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/1739ffd727.js" crossorigin="anonymous"></script>
+    <style>
+
+        :root{
+            margin: 0;
+            padding: 0; 
+        }
+        html{
+            font-family: 'Lato', sans-serif;
+            font-size: 16px;
+            box-sizing: border-box; 
+        }
+        .container{
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+        }
+        /*///////////style para el Reloj*/ 
+        .hora{
+            margin-top: 20px;
+            margin-left:100px;
+        }
+        .hora i{
+            font-size: 50px;
+            color: yellow;
+        }
+        .hora h3{
+            font-size: 25px;
+        }
+         /*///////////style para el Titulo*/ 
+        .titulo{
+           text-align: center;
+           font-weight: 300px;
+           margin-bottom: 30px;
+        }
+        .titulo i{
+            font-size: 50px;
+        }
+         /*///////////style para el Formulario*/ 
+        .form{
+           display: flex;
+           flex-direction: column;
+           flex-wrap: wrap;
+           background-color: #d3c09a;
+           border-radius: 3px;
+           margin: auto;
+           width: 300px;
+           padding: 20px;
+        }
+       .input{
+           margin: 5px;
+           text-align: center;
+           width: 280px;
+           color: #222;
+        }
+        .button{
+            background-color: #eebb4d;
+            border-radius: 3px;
+            border-color:#eebb4d ;
+            margin: auto;
+            width: 200px;
+        }
+         /*///style para Estado del Tiempo/Respuesta API*/ 
+         .tiempo{
+            margin-top: 50px;
+           text-align: center;
+        }
+        .tiempo h2 i{
+            size: 5px;
+        }
+        .tiempo h3 strong{
+            font-size: 25px;
+        }
+        /* loader*/
+        .loader{
+            display: none;
+            margin: auto;
+        }
+        /*///dark theme btn///*/
+        .tema-oscuro-btn{
+            position: fixed;
+            /*z-index: 999;*/
+            bottom: 1vh;
+            left: 1vw;
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            font-size: 2rem;
+            font-weight: bold;
+            background-color: #f7df1e;
+            color: #222;
+            cursor: pointer;
+            outline: 0;
+            border: 0;
+            transition: all 0.3s ease-out;
+        }
+        .tema-oscuro-btn:hover{
+            background-color: #222;
+            color: #f7df1e; 
+        }
+        .modo-oscuro{
+            background-color:#222;
+            color: cornsilk;
+            
+            
+        }
+        @media(max-width: 400px){
+        .form{
+            width: 200px;
+            padding: auto;
+        }
+        .input{
+            width: 180px;
+            margin: auto;
+        }
+        .button{
+            width: 100px;
+        }
+        .tiempo h2 i{
+            size: 2px;
+        }
+        .tiempo h3 strong{
+            font-size: 16px;
+        }
+        .hora h3{
+            font-size: 16px;
+        }
+        .hora i{
+            font-size: 15px; 
+        }
+        .tema-oscuro-btn{
+            font-size: 1rem;
+            width: 2rem;
+            height: 2rem;
+        }
+        }
+
+    </style>
+</head>
+<body data-dark>
+    <section class="container">
+        <div id="hora" class="hora"></div>
+        
+    <h1 class="titulo"><i class="fas fa-cloud-sun"></i> Estado del Tiempo </h1>
+    <form id="form" class="form">
+    <input type="search" id="inputCiudad"name="ciudad" placeholder="Buscar Localidad" required class="input"><br>
+    <input type="search" id="inputPais" name="pais" placeholder="Buscar País" class="input"><br> 
+    
+    <button type="submit" class="button">Obtener Clima</button>
+    </form>
+    <img class="loader" src="../assets/loading.svg" alt="Cargando...">
+    <aside class="error"></aside>
+
+    <section id="tiempo" class="tiempo">
+        <template id="tiempo-template">
+            
+        </template>
+    </section>
+    <button class="tema-oscuro-btn">🌙</button>
+</section>
+
+    <script>
+        $form=document.getElementById("form"),
+        $loader=document.querySelector(".loader"),
+        $error=document.querySelector(".error"),
+        $tiempo=document.getElementById("tiempo"),
+        $template=document.getElementById("tiempo-template").content
+       
+        $form.addEventListener ("submit",async e=>{
+            e.preventDefault();
+            console.log($form.textContent);
+            try {
+                $loader.style.display="block";
+                let ciudadValue=e.target.ciudad.value,
+                paisValue=e.target.pais.value;
+                console.log(ciudadValue) ;        
+               const apikey="a4fae39b155836fbd29442ff4b77910f",
+
+                url=`http://api.openweathermap.org/data/2.5/weather?q=${ciudadValue},${paisValue}&appid=${apikey}&units=metric`;
+                   
+                res=await fetch(url);
+                json=await res.json();
+                console.log(res,json);
+               
+                if(json.cod>400 && json.cod <500){
+                $template=`<h2>Error <mark>${json.cod}-${ciudadValue}-${json.message} </mark></h2>`; 
+                }else{
+
+                $template=`
+                <h2><i class="fas fa-city"></i>  Localidad ${json.name}-${json.sys.country} </h2>
+                <h3>Temperatura de  <strong> ${json.main.temp} °C </strong></h3>
+                <h3>Minima ${json.main.temp_min} °C</h3>
+                <h3>Máxima ${json.main.temp_max} °C</h3>
+                <h3>Humedad ${json.main.humidity} %</h3>
+                <h3>Sensación Térmica ${json.main.feels_like} °</h3>
+                <h3>Velocidad del viento ${json.wind.speed} km/h.</h3>`;
+            
+                } 
+                $loader.style.display="none";
+                $tiempo.innerHTML=$template;
+  
+            } catch (err) {
+               // console.log("error");
+                $error.innerHTML=`<p>error ${json.cod}:${json.message}</p>`;
+                $loader.style.display="none";  
+            }
+        });
+
+        function reloj(hora){
+            setInterval(() => {
+            let Hora=new Date().toLocaleTimeString()
+            //console.log(Hora);
+            document.querySelector(hora).innerHTML=`<h3> <i class="fas fa-sun"></i> ${Hora} <i class="fas fa-moon"></i></h3>`;
+        }, 1000); 
+        };
+        //la función recibe dos parametros,el btn y la class css para tema oscuro
+        function temaOscuro(btn,classModo){
+    const $temaBtn=document.querySelector(btn),
+    //selectores para capturar el atributo del HTML data-dark///
+    $selectores=document.querySelectorAll("[data-dark]");
+    //console.log($selectores);
+
+    let luna="🌙",
+    sol="☀️";
+    
+    document.addEventListener("click",(e)=>{
+        if(e.target.matches(btn)){
+            console.log($temaBtn.textContent);
+            if($temaBtn.textContent===luna){
+                $selectores.forEach((el)=>el.classList.add(classModo));
+                $temaBtn.textContent=sol;
+            }else{
+                $selectores.forEach((el)=>el.classList.remove(classModo));
+                $temaBtn.textContent=luna; 
+            }
+        }
+    })
+    }
+    document.addEventListener("DOMContentLoaded",e=>{
+            reloj("#hora");
+            temaOscuro(".tema-oscuro-btn","modo-oscuro");
+        });
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dog</title>
+    <style>
+        html{
+            text-align: center;
+            font-family: sans-serif;
+        }
+        .section{
+            display: flex;
+            flex-direction: column;
+        }
+        .titulo{
+            font-weight: bold;
+            font-size: 25px;
+        }
+        .main{
+            justify-items: center;
+           font-size: 100px;
+        }
+        .main img{
+            max-width: 100%;
+        }
+       
+    </style>
+</head>
+<body>
+    <section class="section">
+    <h1 class="titulo">Dog</h1>
+    <main id="dog" class="main"></main>
+</section>
+    <script>
+   
+    $dog=document.getElementById("dog"),
+    $fragment=document.createDocumentFragment();
+
+    async function getDog(url){
+        try {
+            let res=await fetch("https://dog.ceo/api/breeds/image/random"),
+            json= await res.json();
+            console.log(json);
+            if(!res.ok)throw{status: res.status,statusText:res.statusText}
+            $fragment=`
+                <img src="${json.message}" alt=${json.message}>`
+            $dog.innerHTML=$fragment;
+        } catch (err) {
+            console.log(err);
+            let message=err.statusText || "Ocurrio un error";
+            $dog.innerHTML=`<h2>Error${err.status}:${message}<h2>`;
+        }finally{
+        }
+    }
+   document.addEventListener("DOMContentLoaded",e=>getDog("https://dog.ceo/api/breeds/image/random"));
+    </script>
+</body>
+</html>
